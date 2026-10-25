@@ -1,131 +1,123 @@
+---
+last_mapped_commit: bd6c25b37e18be419e3d1a63a4fd11d4ec501580
+last_mapped_at: 2026-10-25
+---
+<!-- refreshed: 2026-10-25 -->
+
 # Testing Patterns
 
-**Analysis Date:** 2026-10-14
+**Analysis Date:** 2026-10-25
 
 ## Test Framework
 
 **Current Status:**
-- **No Automated Test Framework Detected:** Neither the Python application nor the TypeScript/React (`LocalSQL-Studio-Next`) application has automated unit or integration tests configured.
-- `requirements.txt` does not include `pytest`, `pytest-qt`, or `coverage`.
-- `LocalSQL-Studio-Next/package.json` does not include `vitest`, `jest`, or `@testing-library/react`.
+- **Active Rust Architecture:** Configured with Rust's native test harness (`cargo test`). Integration test support is enabled via `[lib]` in `Cargo.toml`, and `tempfile = "3.10"` is configured under `[dev-dependencies]`.
+- **Legacy Codebases:** No automated tests were ever implemented for the legacy Python or Electron applications (`requirements.txt` lacks `pytest`, and `LocalSQL-Studio-Next/package.json` lacks test runners).
 
-**Recommended Runners:**
-- **Python Backend & UI:** `pytest` (>= 8.0) and `pytest-qt` (>= 4.4.0) for Qt signal and widget testing.
-- **Frontend & WebAssembly:** `vitest` (^1.0+) with `@testing-library/react`.
+**Test Runners & Tooling:**
+- **Primary:** `cargo test` (built-in Rust test framework).
+- **Fixtures:** `tempfile` (3.10) for disk-isolated CSV and Excel test file generation.
+- **Coverage (Planned):** `cargo-tarpaulin` or `cargo-llvm-cov` for branch and line coverage reports.
 
-**Run Commands (Planned / Recommended):**
+**Run Commands:**
+
 ```bash
-# Python test execution
-pytest tests/ -v                       # Run all Python unit tests
-pytest tests/ --cov=database --cov=ui  # Run with coverage report
 
-# React / Electron test execution
-cd LocalSQL-Studio-Next
-npm run test                           # Run Vitest test suite
+# Run all unit and integration tests
+
+cargo test
+
+# Run only library unit tests
+
+cargo test --lib
+
+# Run a specific test by name
+
+cargo test test_duckdb_query_execution
+
+# Run tests showing stdout output
+
+cargo test -- --nocapture
+
+# Run integration tests in tests/
+
+cargo test --test '*'
 ```
 
-## Test File Organization
+## Test Organization
 
-**Location (Recommended Structure):**
+**Recommended & Active Structure:**
+
 ```text
 Single Server SQL Program/
-├── tests/
-│   ├── conftest.py                    # Shared pytest fixtures (in-memory DB, temp CSVs)
-│   ├── test_duckdb_manager.py         # Tests for query execution and view creation
-│   ├── test_file_parser.py            # Tests for Excel/CSV schema detection
-│   ├── test_exporter.py               # Tests for CSV, Excel, Parquet file generation
-│   ├── test_workspace_manager.py      # Tests for workspace.json serialization
-│   └── ui/
-│       ├── test_results_grid.py       # VirtualTableModel item model verification
-│       └── test_sql_highlighter.py    # Syntax highlighting regex checks
-└── LocalSQL-Studio-Next/
-    └── src/
-        └── __tests__/
-            └── App.test.tsx           # React component and WASM init tests
+├── Cargo.toml
+├── src/
+│   ├── lib.rs
+│   ├── db/
+│   │   └── mod.rs             # Inlined unit tests: #[cfg(test)] mod tests
+│   ├── parsers/
+│   │   └── mod.rs             # Parser unit tests with mock CSV/sheet data
+│   ├── ui/
+│   │   └── mod.rs             # State management and event handler unit tests
+│   └── export/
+│       └── mod.rs             # Serialization and file export unit tests
+└── tests/                     # Integration tests (black-box against public lib.rs API)
+    ├── common/
+    │   └── mod.rs             # Shared test helpers and fixture builders
+    ├── test_duckdb_core.rs    # In-memory database initialization, query and types
+    ├── test_csv_ingestion.rs  # Streaming CSV file registration and querying
+    ├── test_excel_ingest.rs   # Calamine .xlsx workbook ingestion and table schemas
+    └── test_export.rs         # Verification of exported .xlsx, .csv, and .json files
 ```
 
-## Test Structure & Patterns (Recommended)
+## Unit Test Conventions
 
-### Unit Testing `DuckDBManager`
-```python
-import pytest
-import os
-import tempfile
-from database.duckdb_manager import DuckDBManager
+**Inlined Unit Tests:**
+Place unit tests at the bottom of the module they test inside a conditional compilation module:
 
-@pytest.fixture
-def db_manager():
-    return DuckDBManager()
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-@pytest.fixture
-def sample_csv():
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-        f.write("id,name,value\n1,Alice,100.5\n2,Bob,200.0\n")
-        path = f.name
-    yield path
-    if os.path.exists(path):
-        os.remove(path)
+    #[test]
+    fn test_in_memory_connection() {
+        let engine = DuckEngine::new().expect("Failed to initialize engine");
+        let result = engine.execute_query("SELECT 42 AS answer").expect("Query failed");
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows[0][0], DataCell::Integer(42));
+    }
+}
+```
 
-def test_register_and_query_csv(db_manager, sample_csv):
-    db_manager.register_csv(sample_csv, "test_table")
-    assert "test_table" in db_manager.registered_tables
+## Integration Tests & Fixtures
+
+**Temporary Test Fixtures:**
+Use `tempfile` to generate isolated spreadsheet and CSV samples during integration test execution to prevent filesystem pollution:
+
+```rust
+use tempfile::NamedTempFile;
+use std::io::Write;
+
+#[test]
+fn test_csv_file_registration() {
+    let mut file = NamedTempFile::new().unwrap();
+    writeln!(file, "id,name,amount\n1,Alice,100.5\n2,Bob,200.0").unwrap();
     
-    result = db_manager._execute_sync("SELECT * FROM test_table WHERE id = 1")
-    assert result["success"] is True
-    assert result["columns"] == ["id", "name", "value"]
-    assert len(result["data"]) == 1
-    assert result["data"][0][1] == "Alice"
-```
-
-### Testing `FileParser` Type Mapping
-```python
-from sources.file_parser import FileParser
-import numpy as np
-import pandas as pd
-
-def test_map_dtype_to_sql():
-    assert FileParser._map_dtype_to_sql(np.dtype("int64")) == "INTEGER"
-    assert FileParser._map_dtype_to_sql(np.dtype("float64")) == "DOUBLE"
-    assert FileParser._map_dtype_to_sql(np.dtype("bool")) == "BOOLEAN"
-    assert FileParser._map_dtype_to_sql(np.dtype("datetime64[ns]")) == "DATE"
-    assert FileParser._map_dtype_to_sql(np.dtype("object")) == "VARCHAR"
-```
-
-### UI Testing with `pytest-qt`
-```python
-from ui.results_grid import VirtualTableModel
-from PySide6.QtCore import Qt
-
-def test_virtual_table_model(qtbot):
-    headers = ["ID", "Name"]
-    data = [(1, "Alpha"), (2, "Beta")]
-    model = VirtualTableModel(data, headers)
+    let engine = DuckEngine::new().unwrap();
+    engine.register_csv_table("users", file.path()).unwrap();
     
-    assert model.rowCount() == 2
-    assert model.columnCount() == 2
-    assert model.data(model.index(0, 1), Qt.DisplayRole) == "Alpha"
+    let result = engine.execute_query("SELECT SUM(amount) FROM users").unwrap();
+    // Validate aggregate result
+}
 ```
 
-## Mocking
+## Quality & Coverage Goals
 
-**Guidelines:**
-- Mock filesystem dialogs (`QFileDialog.getOpenFileNames`, `QFileDialog.getSaveFileName`) during GUI integration testing.
-- For DuckDB-WASM in TypeScript, mock `@duckdb/duckdb-wasm` web workers when testing pure React UI states.
-- Avoid mocking DuckDB in Python backend tests: DuckDB connects directly to `:memory:` in microseconds, making real queries faster and more reliable than mock objects.
-
-## Coverage
-
-**Requirements:**
-- Current: 0% (no automated tests present).
-- Target: Recommend reaching >=80% branch coverage on core data logic (`database/duckdb_manager.py`, `sources/file_parser.py`, `export/exporter.py`).
-
-## Common Testing Gaps
-
-1. **Query Execution Thread Safety:** No test verifies concurrent queries or background worker behavior under slow queries.
-2. **Path Injection & Escaping:** No validation tests for file paths containing apostrophes, backslashes, or spaces.
-3. **Large File Handling:** No stress tests verifying behavior on 100MB+ Excel or CSV datasets.
-4. **Export Integrity:** No round-trip tests verifying that data exported via `export/exporter.py` can be read back identically.
+- **Analytical Core:** 100% test coverage for SQL execution, type conversion (integers, floats, dates, strings, nulls), and error propagation.
+- **Parsers:** Test edge cases such as empty worksheets, special characters in column headers, missing delimiters, and mismatched row counts.
+- **Export:** Byte-level validation of output files ensuring generated Excel and CSV files can be reopened cleanly.
 
 ---
 
-*Testing analysis: 2026-10-14*
+*Testing analysis: 2026-10-25*

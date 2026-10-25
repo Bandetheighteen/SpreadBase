@@ -1,87 +1,97 @@
+---
+last_mapped_commit: bd6c25b37e18be419e3d1a63a4fd11d4ec501580
+last_mapped_at: 2026-10-25
+---
+<!-- refreshed: 2026-10-25 -->
+
 # External Integrations
 
-**Analysis Date:** 2026-10-14
+**Analysis Date:** 2026-10-25
 
 ## APIs & External Services
 
 **Local-First Design:**
-- In accordance with the core architecture defined in `Concept.txt`, the application operates completely offline by default.
-- No third-party SaaS APIs, telemetry trackers, cloud services, or remote analytics endpoints are integrated.
-- Source data strictly remains on the local filesystem and in local RAM.
+- In accordance with the core design specification (`Concept.txt`) and project requirements (`.planning/PROJECT.md`), the application operates completely offline.
+- No third-party cloud services, remote telemetry endpoints, or SaaS analytics APIs are integrated.
+- All query operations, file ingestion, and analytical transformations remain strictly within the local process space and memory.
 
 ## Data Storage
 
 **Databases:**
-- **DuckDB (In-Memory Python):**
-  - Engine: DuckDB in-process OLAP engine (`database/duckdb_manager.py:27`).
-  - Connection: `duckdb.connect(':memory:')` initialized on application start.
-  - Driver/Client: Python native `duckdb` module.
-  - Table Registration: Creates views via `read_csv_auto('{file_path}')` for CSVs; loads Excel sheets into DataFrames and executes `CREATE TABLE {table_name} AS SELECT * FROM df`.
-- **DuckDB-WASM (In-Memory Browser/Electron):**
-  - Engine: `@duckdb/duckdb-wasm` running inside a WebAssembly Web Worker (`LocalSQL-Studio-Next/src/App.tsx:25-34`).
-  - Connection: `AsyncDuckDBConnection` via `duckdb.connect()`.
-  - Data Ingestion: Ingests CSV files via `insertCSVFromPath` and `registerFileText`.
+- **DuckDB (Embedded In-Process Engine — Rust):**
+  - Engine: Embedded DuckDB v1.1.1 (`duckdb` crate with `bundled` feature).
+  - Connection: `duckdb::Connection::open_in_memory()` running in background worker thread.
+  - Driver/Client: Native Rust C bindings compiled directly into the binary.
+  - Table Registration: Ingests sheets and files as in-memory DuckDB tables and views with zero network latency.
+- **DuckDB (Legacy Python Prototype):**
+  - Engine: DuckDB Python module (`database/duckdb_manager.py:27`).
+  - Connection: `duckdb.connect(':memory:')`.
+  - Table Registration: `read_csv_auto('{file_path}')` for CSVs; loads Excel sheets into pandas DataFrames and executes `CREATE TABLE {table_name} AS SELECT * FROM df`.
+- **DuckDB-WASM (Legacy Web/Electron Prototype):**
+  - Engine: `@duckdb/duckdb-wasm` running inside a WebAssembly Web Worker (`LocalSQL-Studio-Next/src/App.tsx`).
 
 **File Storage:**
 - **Local Filesystem Only:**
-  - Ingestion: Reads `.csv`, `.xlsx`, and `.xls` files selected by the user via file dialogs (`ui/main_window.py:144-170`, `LocalSQL-Studio-Next/main.cjs:49-56`).
-  - Metadata: Stores workspace configuration, registered file sources, table schemas, and query history in `workspace.json` via `workspace/workspace_manager.py`.
-  - Export Target: Writes query output files to local disk in `.csv`, `.xlsx`, `.json`, or `.parquet` formats via `export/exporter.py`.
+  - Ingestion: Reads local `.xlsx`, `.xls`, and `.csv` files selected by the user via native OS dialogs (`rfd::FileDialog` in Rust, `QFileDialog` in Python, Electron IPC dialog).
+  - Storage Paradigm: Treats each Excel workbook as a logical database and each individual sheet as a queryable relational table.
+  - Export Target: Writes query output datasets to local disk in `.csv`, `.xlsx` (via `rust_xlsxwriter`), and `.json` formats.
 
-**Caching:**
-- None. Query results and registered tables reside exclusively in DuckDB in-memory buffers during process lifetime.
+**Caching & Persistence:**
+- Pure in-memory query execution. Materialized views and tables exist within DuckDB memory buffers during process lifetime.
+- Legacy workspace session persistence existed via `workspace/workspace_manager.py` targeting `workspace.json`.
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None. This is a single-user local desktop application. There are no user accounts, passwords, JWT tokens, or authentication providers.
+- None. This is a local desktop analytical workbench with single-user execution and no identity providers, tokens, or network logins.
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- **Python / PySide6 App:** Exception catching in `database/duckdb_manager.py` emits errors via Qt signals (`QueryWorkerSignals.error`), displayed in the "Messages" tab of `ui/results_grid.py:110-115` and status bar messages (`ui/main_window.py:138-142`).
-- **React / Electron App:** React state (`error`) rendered via `AlertCircle` banner (`LocalSQL-Studio-Next/src/App.tsx:66-67, 137-142`).
-- **Electron Main Process:** Web contents console messages forwarded to stdout (`LocalSQL-Studio-Next/main.cjs:32-34`).
-- **External Error Tracking Service:** None (no Sentry, Datadog, or Bugsnag).
+- **Rust Core:** `Result<T, E>` pattern propagating errors to GUI state, surfaced directly in the UI messages panel and status bar.
+- **Python / PySide6 App:** Exception handling in `database/duckdb_manager.py` emits errors via Qt signals (`QueryWorkerSignals.error`), displayed in `ui/results_grid.py:110-115`.
+- **React / Electron App:** React state error banner (`LocalSQL-Studio-Next/src/App.tsx:66-67`).
+- **External Error Reporting:** None (no Sentry, Datadog, or external telemetry).
 
 **Logs:**
-- Standard console logging (`sys.stdout`, `console.log`).
-- `LocalSQL-Studio-Next/out.log` used for local development logging.
-- `wiki/log.md` contains historical research notes.
+- Standard console streams (`stdout`, `stderr`).
+- Diagnostic messages in UI status bar and output panels.
 
 ## CI/CD & Deployment
 
 **Hosting & Distribution:**
 - Distributed as standalone Windows desktop application binaries:
-  - Native Python executable: `dist/LocalSQLStudio.exe` built via PyInstaller (`LocalSQLStudio.spec`).
-  - Electron installer: `LocalSQL-Studio-Next/release/LocalSQL Studio Setup 0.0.0.exe` built via Electron Builder (`LocalSQL-Studio-Next/package.json`).
-- Python background server (`server.py`) optionally serves static files from `dist/` on local port `8080` with a Tkinter tray window.
+  - Native Rust Executable: `target/release/localsql_studio.exe` built via `cargo build --release`.
+  - Legacy PyInstaller executable: `dist/LocalSQLStudio.exe`.
+  - Legacy Electron installer: `LocalSQL-Studio-Next/release/LocalSQL Studio Setup 0.0.0.exe`.
 
 **CI Pipeline:**
-- None detected. Builds and packaging are executed locally.
+- None configured in repo. All builds and test suites are executed locally via Cargo.
 
 ## Environment Configuration
 
 **Required env vars:**
-- None required for runtime.
-- `NODE_ENV`: Set to `development` during Electron dev workflow (`LocalSQL-Studio-Next/package.json:9`).
+- None required for runtime execution.
 
 **Secrets location:**
-- No secrets, credentials, or API tokens are used or stored.
+- No secrets, API keys, or credentials are used or stored.
 
-## Webhooks & Callbacks
+## Webhooks & IPC Callbacks
 
-**Incoming:**
+**Inter-Thread Communication (Rust):**
+- Lock-free message channels via `crossbeam_channel::unbounded()` connecting the immediate-mode GUI (`ui`) to the background DuckDB execution thread (`db`).
+
+**Legacy Webhooks & IPC:**
 - **Python HTTP API (`server.py:21-94`):**
-  - `POST /api/query` - Receives JSON `{ "query": "..." }`, runs query via DuckDB, returns JSON array of rows.
-  - `POST /api/load` - Receives JSON `{ "filePath": "..." }`, reads Excel sheets via pandas, creates DuckDB tables, returns loaded table names.
+  - `POST /api/query` — Receives JSON `{ "query": "..." }`, executes against in-memory DuckDB, returns JSON array of records.
+  - `POST /api/load` — Receives JSON `{ "filePath": "..." }`, loads Excel sheets into DuckDB tables.
 - **Electron IPC Handlers (`LocalSQL-Studio-Next/main.cjs:49-76`):**
-  - `dialog:openFile` - Invokes OS file picker dialog for Excel and CSV files.
-  - `db:loadExcel` - Reads workbook using SheetJS (`xlsx.readFile`), converts sheets to CSV strings, and returns sheet metadata to the renderer.
+  - `dialog:openFile` — Invokes native file dialog.
+  - `db:loadExcel` — Reads workbook via SheetJS and streams CSV strings to renderer.
 
 **Outgoing:**
-- None. All network requests are strictly loopback (`127.0.0.1` / `localhost`).
+- None. Loopback or in-process only.
 
 ---
 
-*Integration audit: 2026-10-14*
+*Integration audit: 2026-10-25*

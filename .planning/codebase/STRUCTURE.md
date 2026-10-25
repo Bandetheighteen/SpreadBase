@@ -1,20 +1,42 @@
+---
+last_mapped_commit: bd6c25b37e18be419e3d1a63a4fd11d4ec501580
+last_mapped_at: 2026-10-25
+---
+<!-- refreshed: 2026-10-25 -->
+
 # Codebase Structure
 
-**Analysis Date:** 2026-10-14
+**Analysis Date:** 2026-10-25
 
 ## Directory Layout
 
 ```text
 Single Server SQL Program/
-├── app.py                     # Entry point for native PySide6 desktop application
-├── server.py                  # Standalone HTTP + Tkinter background server
-├── requirements.txt           # Python dependencies (PySide6, duckdb, pandas, etc.)
-├── LocalSQLStudio.spec        # PyInstaller packaging configuration
+├── Cargo.toml                 # Rust package manifest (dependencies, targets, profiles)
+├── Cargo.lock                 # Locked dependency graph for reproducible builds
+├── src/                       # Core 100% Rust architecture
+│   ├── main.rs                # Desktop application binary entry point
+│   ├── lib.rs                 # Library target exposing core modules for app and integration tests
+│   ├── db/                    # Embedded DuckDB engine, connections & worker threads
+│   │   └── mod.rs             # Database management module definition
+│   ├── parsers/               # Tabular data ingestion parsers
+│   │   └── mod.rs             # Excel (calamine) and CSV parsing module
+│   ├── ui/                    # Immediate-mode desktop GUI (egui / eframe)
+│   │   └── mod.rs             # Desktop application shell, editor tabs & virtual table
+│   └── export/                # Multi-format result serialisation
+│       └── mod.rs             # Excel (rust_xlsxwriter), CSV, JSON export module
+├── target/                    # Cargo build cache and binary output directory
 ├── Concept.txt                # Comprehensive product design & architecture specification
-├── database/                  # DuckDB engine wrapper and worker thread management
+│
+│── [Legacy Python Architecture - Deprecated]
+├── app.py                     # Legacy PySide6 desktop entry point
+├── server.py                  # Standalone HTTP + Tkinter background server
+├── requirements.txt           # Legacy Python dependencies (PySide6, duckdb, pandas)
+├── LocalSQLStudio.spec        # Legacy PyInstaller packaging configuration
+├── database/                  # Legacy Python DuckDB wrapper
 │   ├── __init__.py
 │   └── duckdb_manager.py      # DuckDB connection & async QueryWorker
-├── ui/                        # PySide6 graphical user interface widgets
+├── ui/                        # Legacy PySide6 GUI widgets
 │   ├── __init__.py
 │   ├── main_window.py         # Main IDE application window & splitter layout
 │   ├── explorer.py            # Left sidebar tree explorer for sources & tables
@@ -22,162 +44,139 @@ Single Server SQL Program/
 │   ├── line_number_area.py    # Custom code editor with gutter & line numbers
 │   ├── syntax_highlighter.py  # SQL syntax colorization rules
 │   └── results_grid.py        # TableView with virtual model, sorting & filtering
-├── utils/                     # UI utilities, styling & icons
+├── utils/                     # Legacy UI utilities, styling & icons
 │   ├── __init__.py
 │   ├── theme.py               # VS Code dark palette & global QSS stylesheet
 │   └── icon_manager.py        # In-memory SVG to QIcon factory
-├── sources/                   # Dataset inspection & file parsing
+├── sources/                   # Legacy dataset inspection & file parsing
 │   ├── __init__.py
 │   ├── file_parser.py         # Excel workbook inspection & schema inference
-│   └── LOGO.png               # Application icon & brand asset
-├── export/                    # Data export formatting
+│   └── LOGO.png               # Application icon asset
+├── export/                    # Legacy data export formatting
 │   ├── __init__.py
 │   └── exporter.py            # CSV, Excel, JSON, and Parquet serializers
-├── workspace/                 # Application state & session persistence
+├── workspace/                 # Legacy application state persistence
 │   ├── __init__.py
 │   └── workspace_manager.py   # JSON-backed configuration & history tracking
-├── wiki/                      # Knowledge base & technical documentation
-│   ├── index.md               # Knowledge base table of contents
-│   ├── log.md                 # Archival log of research topics
-│   └── database-tools/        # Deep-dive research notes on local SQL tools
-│       ├── local-sql-on-csv-excel.md
-│       └── go-language-cli-tools-for-local-sql.md
-├── LocalSQL-Studio-Next/      # Next-generation React 19 + TypeScript + Electron app
+│
+│── [Legacy Web/Electron Architecture - Deprecated]
+├── LocalSQL-Studio-Next/      # Legacy React 19 + TypeScript + Electron app
 │   ├── package.json           # Node.js dependencies & scripts
-│   ├── main.cjs               # Electron main process (IPC & window management)
+│   ├── main.cjs               # Electron main process
 │   ├── preload.cjs            # Electron preload context isolation bridge
 │   ├── index.html             # Vite entry HTML
 │   ├── vite.config.ts         # Vite bundler configuration
-│   ├── tailwind.config.cjs    # Tailwind CSS design system configuration
-│   ├── tsconfig.json          # TypeScript project references
 │   └── src/
-│       ├── main.tsx           # React DOM root initialization
-│       ├── App.tsx            # Main workbench with DuckDB-WASM & Monaco editor
-│       ├── index.css          # Tailwind CSS global styles
-│       └── App.css            # Component-specific styles
-├── build/                     # PyInstaller temporary build artifacts
-├── dist/                      # PyInstaller binary output (`LocalSQLStudio.exe`)
-└── raw/                       # Staging directory for raw user datasets
+│       ├── main.tsx           # React DOM root
+│       └── App.tsx            # Main workbench with DuckDB-WASM & Monaco editor
+│
+│── [Project Planning & Research]
+├── .planning/                 # GSD planning directory (ROADMAP, STATE, phases, codebase)
+├── wiki/                      # Knowledge base & technical research notes
+├── build/                     # Legacy PyInstaller temporary build artifacts
+├── dist/                      # Legacy PyInstaller binary output
+└── raw/                       # Staging directory for test datasets
 ```
 
 ## Directory Purposes
 
-**`database/`:**
-- Purpose: DuckDB database interaction and concurrency management.
-- Contains: In-process database connector, table/view registration routines, and thread-safe worker execution.
-- Key files: `database/duckdb_manager.py`.
+**`src/`:**
+- Purpose: Active core codebase for the 100% Rust implementation.
+- Contains: Application binary entry (`main.rs`), public library interface (`lib.rs`), and modular domain subsystems.
+- Key subdirectories:
+  - `src/db/`: In-process DuckDB engine management, connection pooling, and background worker threads.
+  - `src/parsers/`: Calamine Excel reader and CSV streaming ingestion.
+  - `src/ui/`: Immediate-mode desktop interface built with `eframe` and `egui`.
+  - `src/export/`: Output serializers generating `.xlsx`, `.csv`, and `.json`.
 
-**`ui/`:**
-- Purpose: All visual desktop presentation components implemented with PySide6.
-- Contains: Layout containers, custom widgets, tab managers, code editors, and table grids.
-- Key files: `ui/main_window.py`, `ui/sql_editor.py`, `ui/results_grid.py`, `ui/explorer.py`.
+**`target/`:**
+- Purpose: Cargo compilation cache, intermediate object files, and compiled binaries.
+- Key output: `target/release/localsql_studio.exe`.
 
-**`sources/`:**
-- Purpose: File discovery, validation, and schema inference.
-- Contains: Parsers for inspecting Excel sheet names and mapping column types to SQL equivalents.
-- Key files: `sources/file_parser.py`.
+**`database/`, `ui/`, `sources/`, `export/`, `utils/`, `workspace/` (Legacy):**
+- Purpose: Legacy Python 3 / PySide6 implementation and prototypes. Scheduled for cleanup in Phase 6.
 
-**`export/`:**
-- Purpose: Exporting query results to standard file formats.
-- Contains: DataFrame conversion logic for `.csv`, `.xlsx`, `.json`, and `.parquet`.
-- Key files: `export/exporter.py`.
+**`LocalSQL-Studio-Next/` (Legacy):**
+- Purpose: Legacy Electron / React 19 / DuckDB-WASM prototype. Scheduled for cleanup in Phase 6.
 
-**`workspace/`:**
-- Purpose: Session persistence and history catalogue.
-- Contains: Logic for loading and saving `workspace.json` (registered files, logical tables, query history).
-- Key files: `workspace/workspace_manager.py`.
-
-**`utils/`:**
-- Purpose: Reusable application-wide UI utilities.
-- Contains: Dark theme styling, color tokens, and SVG icon generators.
-- Key files: `utils/theme.py`, `utils/icon_manager.py`.
-
-**`wiki/`:**
-- Purpose: Project documentation and domain research notes.
-- Contains: Markdown files analyzing competitive local database tools, CLI architectures, and research logs.
-- Key files: `wiki/index.md`, `wiki/database-tools/local-sql-on-csv-excel.md`.
-
-**`LocalSQL-Studio-Next/`:**
-- Purpose: Modern rewrite utilizing React 19, TypeScript, DuckDB-WASM, and Electron.
-- Contains: Full frontend SPA and Electron desktop distribution pipeline.
-- Key files: `LocalSQL-Studio-Next/src/App.tsx`, `LocalSQL-Studio-Next/main.cjs`.
+**`.planning/`:**
+- Purpose: Getting Shit Done (GSD) project lifecycle tracking, milestone requirements, phase plans, and codebase intel.
 
 ## Key File Locations
 
 **Entry Points:**
-- `app.py`: PySide6 Native Desktop App entry point.
-- `server.py`: Python background HTTP and Tkinter web server.
-- `LocalSQL-Studio-Next/main.cjs`: Electron desktop entry point.
-- `LocalSQL-Studio-Next/src/main.tsx`: React web app entry point.
+- `src/main.rs`: Rust native binary entry point.
+- `src/lib.rs`: Rust library root exposing `db`, `parsers`, `ui`, `export`.
+- `app.py`: Legacy PySide6 desktop entry point.
+- `server.py`: Legacy Python HTTP / Tkinter server.
+- `LocalSQL-Studio-Next/main.cjs`: Legacy Electron entry point.
 
 **Configuration:**
-- `requirements.txt`: Python package requirements.
-- `LocalSQLStudio.spec`: PyInstaller executable compilation configuration.
-- `LocalSQL-Studio-Next/package.json`: Node dependencies, build scripts, electron-builder specs.
-- `LocalSQL-Studio-Next/tsconfig.json`: TypeScript compiler options.
-- `LocalSQL-Studio-Next/tailwind.config.cjs`: Tailwind CSS theme configuration.
+- `Cargo.toml`: Active Cargo build configuration, dependencies, and compiler profiles.
+- `requirements.txt`: Legacy Python requirements.
+- `LocalSQLStudio.spec`: Legacy PyInstaller build spec.
+- `LocalSQL-Studio-Next/package.json`: Legacy Node.js package definition.
 
 **Core Logic:**
-- `database/duckdb_manager.py`: Native query execution and view/table registration.
-- `sources/file_parser.py`: Schema deduction from raw datasets.
-- `workspace/workspace_manager.py`: Catalogue state management.
-- `LocalSQL-Studio-Next/src/App.tsx`: DuckDB-WASM worker initialization and query running.
-
-**Testing:**
-- Currently no automated unit test files are located in root or `LocalSQL-Studio-Next/` (see `TESTING.md` and `CONCERNS.md`).
+- `src/db/mod.rs`: Rust DuckDB engine wrapper and worker dispatch.
+- `src/parsers/mod.rs`: Rust Excel and CSV file parsers.
+- `src/ui/mod.rs`: Rust `egui`/`eframe` GUI application shell.
+- `src/export/mod.rs`: Rust multi-format data export.
 
 ## Naming Conventions
 
-**Files:**
-- Python modules: `snake_case.py` (e.g., `main_window.py`, `duckdb_manager.py`, `file_parser.py`).
-- TypeScript / React: `kebab-case` for config (`tsconfig.app.json`), `PascalCase` for React components (`App.tsx`), `camelCase` / `kebab-case` for CJS scripts (`main.cjs`, `preload.cjs`).
-- Documentation: `UPPERCASE.md` for planning, `kebab-case.md` for wiki articles (`local-sql-on-csv-excel.md`).
+**Rust:**
+- File names: `snake_case.rs` (e.g., `lib.rs`, `main.rs`, `mod.rs`).
+- Module names: `snake_case` (`db`, `parsers`, `ui`, `export`).
+- Structs, Enums, Traits: `PascalCase` (e.g., `DuckEngine`, `QueryCommand`, `QueryResult`).
+- Functions & Methods: `snake_case` (e.g., `execute_query`, `register_excel_sheet`).
+- Constants & Statics: `SCREAMING_SNAKE_CASE` (e.g., `DEFAULT_WINDOW_WIDTH`).
+- Macros: `snake_case!` (e.g., `vec!`, `println!`).
 
-**Directories:**
-- Python packages: `lowercase` (`database/`, `ui/`, `sources/`, `export/`, `workspace/`, `utils/`).
-- Web modules: `kebab-case` (`database-tools/`, `LocalSQL-Studio-Next/`).
+**Legacy Python:**
+- Modules: `snake_case.py`.
+- Classes: `PascalCase`.
+- Methods: `snake_case`.
 
-**Code Identifiers:**
-- Python Classes: `PascalCase` (`MainWindow`, `DuckDBManager`, `SqlCodeEditor`, `VirtualTableModel`).
-- Python Functions/Methods: `snake_case` (`run_query`, `register_csv`, `get_excel_sheets`).
-- Python Constants: `SCREAMING_SNAKE_CASE` (`BACKGROUND`, `PRIMARY_ACCENT`).
-- TypeScript / React: `camelCase` for functions/hooks (`runQuery`, `initDB`, `loadFile`), `PascalCase` for React components (`App`).
+**Legacy TypeScript:**
+- Components: `PascalCase.tsx`.
+- Utilities: `camelCase.ts` or `kebab-case.cjs`.
 
 ## Where to Add New Code
 
-**New Database / Query Feature (Python):**
-- Primary code: Add methods to `database/duckdb_manager.py` (e.g., query cancellation, export via DuckDB `COPY`, transaction handling).
-- UI Integration: Hook methods in `ui/main_window.py` or `ui/sql_editor.py`.
+**New Database / Query Feature (Rust):**
+- Primary location: `src/db/mod.rs` (or submodules like `src/db/connection.rs`, `src/db/worker.rs`).
+- Public interface: Re-export in `src/db/mod.rs` and `src/lib.rs`.
 
-**New UI Panel or Tab (Python):**
-- Implementation: Create new widget in `ui/` (e.g., `ui/schema_viewer.py`, `ui/query_history_panel.py`).
-- Integration: Add widget to splitter or tab in `ui/main_window.py`.
+**New File Ingestion Parser (Rust):**
+- Primary location: `src/parsers/mod.rs` (or `src/parsers/excel.rs`, `src/parsers/csv.rs`).
+- Integration: Hook parser results into `src/db/mod.rs` table registration.
 
-**New Export Format:**
-- Implementation: Add static serializer method in `export/exporter.py` (e.g., `Exporter.export_to_sql()`).
-- UI Trigger: Add file filter option in `ui/main_window.py:export_results()`.
+**New UI Panel or Control (Rust):**
+- Primary location: `src/ui/mod.rs` (or `src/ui/editor.rs`, `src/ui/table.rs`, `src/ui/sidebar.rs`).
+- Integration: Add rendering subroutines into `eframe::App::update()`.
 
-**New Feature (LocalSQL-Studio-Next):**
-- React UI components: Create modular components in `LocalSQL-Studio-Next/src/components/` (e.g., `Editor.tsx`, `Sidebar.tsx`, `DataGrid.tsx`).
-- Native capabilities: Add IPC handlers in `LocalSQL-Studio-Next/main.cjs` and expose via `LocalSQL-Studio-Next/preload.cjs`.
+**New Export Format (Rust):**
+- Primary location: `src/export/mod.rs`.
+- Integration: Add format serializer and wire to UI export menu.
+
+**Integration Tests:**
+- Primary location: `tests/` directory at repository root (e.g., `tests/test_duckdb.rs`, `tests/test_parsers.rs`).
 
 ## Special Directories
 
-**`dist/` & `build/`:**
-- Purpose: Generated by PyInstaller when building `LocalSQLStudio.exe`.
-- Generated: Yes.
-- Committed: Recommended for `.gitignore` (contains 100MB+ binary `LocalSQLStudio.exe`).
+**`target/`:**
+- Generated by Cargo during build and test runs.
+- Excluded via `.gitignore`.
 
-**`LocalSQL-Studio-Next/release/`:**
-- Purpose: Generated by `electron-builder` when packaging Windows installers.
-- Generated: Yes.
-- Committed: Recommended for `.gitignore` (contains ~118MB executable installers).
+**`dist/` & `build/`:**
+- Generated by PyInstaller for legacy Python binaries.
+- Excluded via `.gitignore`.
 
 **`LocalSQL-Studio-Next/node_modules/` & `venv/`:**
-- Purpose: Third-party package dependencies for Node and Python.
-- Generated: Yes.
-- Committed: Excluded via `.gitignore`.
+- Third-party packages for legacy runtimes.
+- Excluded via `.gitignore`.
 
 ---
 
-*Structure analysis: 2026-10-14*
+*Structure analysis: 2026-10-25*
