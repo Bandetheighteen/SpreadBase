@@ -1,8 +1,10 @@
 //! Embedded DuckDB database manager for LocalSQL Studio
 
 use crate::db::types::{ColumnMeta, DbError, QueryResult, SqlValue};
+use crate::parsers::{read_csv_file, read_excel_file, SheetTable};
 use duckdb::types::ValueRef;
 use duckdb::Connection;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -65,6 +67,83 @@ impl DbManager {
         Ok(rows_affected)
     }
 
+    /// Registers a `SheetTable` into DuckDB as an independent relational table.
+    pub fn register_sheet_table(&self, sheet: &SheetTable) -> Result<(), DbError> {
+        if sheet.columns.is_empty() {
+            return Ok(());
+        }
+
+        // Determine column types based on row values
+        let mut col_defs = Vec::with_capacity(sheet.columns.len());
+        for (col_idx, col_name) in sheet.columns.iter().enumerate() {
+            let col_type = infer_column_sql_type(&sheet.rows, col_idx);
+            let sanitized_col = col_name.replace('"', "\"\"");
+            col_defs.push(format!("\"{}\" {}", sanitized_col, col_type));
+        }
+
+        let table_ident = sheet.table_name.replace('"', "\"\"");
+        let create_table_sql = format!(
+            "CREATE OR REPLACE TABLE \"{}\" ({})",
+            table_ident,
+            col_defs.join(", ")
+        );
+
+        let mut conn = self.conn.lock().map_err(|e| DbError::ConnectionError(e.to_string()))?;
+        conn.execute(&create_table_sql, [])
+            .map_err(|e| DbError::QueryError(format!("Failed to create table {}: {}", sheet.table_name, e)))?;
+
+        if !sheet.rows.is_empty() {
+            let placeholders = vec!["?"; sheet.columns.len()].join(", ");
+            let insert_sql = format!("INSERT INTO \"{}\" VALUES ({})", table_ident, placeholders);
+
+            let tx = conn.transaction().map_err(|e| DbError::QueryError(e.to_string()))?;
+            {
+                let mut stmt = tx.prepare(&insert_sql).map_err(|e| DbError::QueryError(e.to_string()))?;
+                for row in &sheet.rows {
+                    stmt.execute(duckdb::params_from_iter(row.iter()))
+                        .map_err(|e| DbError::QueryError(format!("Failed to insert row: {}", e)))?;
+                }
+            }
+            tx.commit().map_err(|e| DbError::QueryError(e.to_string()))?;
+        }
+
+        Ok(())
+    }
+
+    /// Ingests an Excel file (.xlsx, .xls) and exposes all sheets as relational tables.
+    pub fn register_excel_file(&self, path: &Path) -> Result<Vec<String>, DbError> {
+        let tables = read_excel_file(path).map_err(|e| DbError::IoError(e.to_string()))?;
+        let mut table_names = Vec::with_capacity(tables.len());
+
+        for sheet in &tables {
+            self.register_sheet_table(sheet)?;
+            table_names.push(sheet.table_name.clone());
+        }
+
+        Ok(table_names)
+    }
+
+    /// Ingests a CSV file and registers it as a relational table.
+    pub fn register_csv_file(&self, path: &Path, table_name: Option<&str>) -> Result<String, DbError> {
+        let table = read_csv_file(path, table_name).map_err(|e| DbError::IoError(e.to_string()))?;
+        let name = table.table_name.clone();
+        self.register_sheet_table(&table)?;
+        Ok(name)
+    }
+
+    /// Lists all user-created tables currently queryable in the in-memory database.
+    pub fn list_tables(&self) -> Result<Vec<String>, DbError> {
+        let query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main' ORDER BY table_name";
+        let res = self.execute_query(query)?;
+        let mut tables = Vec::with_capacity(res.row_count);
+        for row in res.rows {
+            if let Some(SqlValue::Text(name)) = row.first() {
+                tables.push(name.clone());
+            }
+        }
+        Ok(tables)
+    }
+
     /// Converts a DuckDB ValueRef into our strongly-typed SqlValue.
     fn value_ref_to_sql_value(val_ref: ValueRef) -> SqlValue {
         match val_ref {
@@ -83,13 +162,11 @@ impl DbManager {
             }
             ValueRef::Blob(bytes) => SqlValue::Blob(bytes.to_vec()),
             ValueRef::Date32(days) => {
-                // days since Unix epoch (1970-01-01)
                 chrono::NaiveDate::from_num_days_from_ce_opt(days + 719163)
                     .map(SqlValue::Date)
                     .unwrap_or_else(|| SqlValue::Text(format!("Date32({})", days)))
             }
             ValueRef::Timestamp(unit, val) => {
-                // Microsecond/millisecond timestamps
                 let secs = match unit {
                     duckdb::types::TimeUnit::Second => val,
                     duckdb::types::TimeUnit::Millisecond => val / 1_000,
@@ -102,5 +179,41 @@ impl DbManager {
             }
             _ => SqlValue::Text(format!("{:?}", val_ref)),
         }
+    }
+}
+
+/// Infers the best DuckDB SQL column type for a set of rows.
+fn infer_column_sql_type(rows: &[Vec<SqlValue>], col_idx: usize) -> &'static str {
+    let mut has_int = false;
+    let mut has_float = false;
+    let mut has_bool = false;
+    let mut has_text = false;
+
+    for row in rows {
+        if let Some(val) = row.get(col_idx) {
+            match val {
+                SqlValue::Null => {}
+                SqlValue::Boolean(_) => has_bool = true,
+                SqlValue::TinyInt(_) | SqlValue::SmallInt(_) | SqlValue::Integer(_) | SqlValue::BigInt(_) | SqlValue::HugeInt(_) => {
+                    has_int = true;
+                }
+                SqlValue::Float(_) | SqlValue::Double(_) => has_float = true,
+                SqlValue::Text(_) | SqlValue::Date(_) | SqlValue::Timestamp(_) | SqlValue::Blob(_) => {
+                    has_text = true;
+                }
+            }
+        }
+    }
+
+    if has_text {
+        "VARCHAR"
+    } else if has_float || (has_int && has_float) {
+        "DOUBLE"
+    } else if has_int {
+        "BIGINT"
+    } else if has_bool {
+        "BOOLEAN"
+    } else {
+        "VARCHAR"
     }
 }

@@ -54,6 +54,24 @@ impl fmt::Display for SqlValue {
     }
 }
 
+impl duckdb::types::ToSql for SqlValue {
+    fn to_sql(&self) -> duckdb::Result<duckdb::types::ToSqlOutput<'_>> {
+        match self {
+            SqlValue::Null => Ok(duckdb::types::ToSqlOutput::Borrowed(duckdb::types::ValueRef::Null)),
+            SqlValue::Boolean(b) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::Boolean(*b))),
+            SqlValue::TinyInt(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::TinyInt(*v))),
+            SqlValue::SmallInt(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::SmallInt(*v))),
+            SqlValue::Integer(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::Int(*v))),
+            SqlValue::BigInt(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::BigInt(*v))),
+            SqlValue::HugeInt(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::HugeInt(*v))),
+            SqlValue::Float(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::Float(*v))),
+            SqlValue::Double(v) => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::Double(*v))),
+            SqlValue::Text(s) => Ok(duckdb::types::ToSqlOutput::Borrowed(duckdb::types::ValueRef::Text(s.as_bytes()))),
+            _ => Ok(duckdb::types::ToSqlOutput::Owned(duckdb::types::Value::Text(self.to_display_string()))),
+        }
+    }
+}
+
 /// Metadata describing a table column in query result sets.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColumnMeta {
