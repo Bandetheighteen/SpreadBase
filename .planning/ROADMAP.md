@@ -2,123 +2,88 @@
 
 ## Overview
 
-Rebuilding LocalSQL Studio as a standalone, 100% Rust desktop application. The application delivers an immediate-mode GPU-accelerated workbench (`egui`/`eframe`) powered by an embedded DuckDB analytical engine. It treats Excel workbooks as databases and their sheets as relational tables, enabling lag-free SQL analysis, multi-sheet JOINs, virtualized data inspection, and multi-format export.
+A standalone, 100% Rust desktop application that lets you query local Excel workbooks (`.xlsx`, `.xls`) and CSV files like databases. It treats each file as a database, each sheet inside as a table, and column headers as variables. You type SQL queries to fetch data, and click a button to export the results back into an Excel or CSV file.
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3...): Planned milestone work
-- Decimal phases (2.1, 2.2...): Urgent insertions (marked with INSERTED)
-
-- [ ] **Phase 1: Rust Core Setup & Embedded DuckDB Engine** - Scaffolding Cargo workspace, bundling DuckDB, and establishing in-memory query execution.
-- [ ] **Phase 2: Ingestion Engine (Excel as Database & CSV Tables)** - Implementing `calamine` Excel sheet extraction and CSV parsing with schema and type reconciliation.
-- [ ] **Phase 3: Native Desktop GUI & Asynchronous Worker Architecture** - Building `eframe`/`egui` dark IDE shell, sidebar explorer, and non-blocking query channels.
-- [ ] **Phase 4: SQL Code Editor & Virtualized Results Data Grid** - Adding multi-line SQL editor with F5 execution, quick table templates, and high-performance `TableBuilder` virtual grid.
-- [ ] **Phase 5: Multi-Format Result Export & Native File Dialogs** - Exporting query results to CSV, Excel (`.xlsx`), and JSON via native OS save dialogs.
-- [ ] **Phase 6: End-to-End Verification, Performance Testing & Legacy Cleanup** - Comprehensive automated test suite, complex multi-sheet JOIN validation, release packaging, and legacy cleanup.
+- [ ] **Phase 1: Ingestion & Embedded SQL Engine** - Build the behind-the-scenes engine that reads Excel and CSV files, turns every sheet into a table (with column headers as variables), and runs SQL queries in memory.
+- [ ] **Phase 2: Desktop Window Shell & File Picker** - Create the desktop window with dark styling, a button to open one or multiple files, and a left sidebar listing all loaded files, sheets, and columns.
+- [ ] **Phase 3: SQL Query Box & Live Results Table** - Add the query editor box to type SQL, a "Run" button (and F5 shortcut), and a fast table that displays the fetched rows and columns.
+- [ ] **Phase 4: Export Button, End-to-End Testing & Cleanup** - Add the export button to save query results into an Excel or CSV file, verify the full workflow end-to-end, and remove outdated prototype files.
 
 ## Phase Details
 
-### Phase 1: Rust Core Setup & Embedded DuckDB Engine
-**Goal**: Establish the Cargo project foundation and configure the embedded DuckDB database engine with in-memory connection and query capabilities.
+### Phase 1: Ingestion & Embedded SQL Engine
+**Goal**: Build the core data engine that runs in memory, reads Excel/CSV files, exposes sheets as relational tables with column headers as fields, and executes SQL queries.
 **Depends on**: Nothing (first phase)
-**Requirements**: ENGINE-01, ENGINE-02
+**Requirements**: ENGINE-01, ENGINE-02, INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05, VERIFY-01, VERIFY-02
 **Success Criteria** (what must be TRUE):
-  1. `cargo check` and `cargo test` compile cleanly on Windows with bundled DuckDB.
-  2. In-memory DuckDB connection can be established, execute arbitrary SQL queries, and return structured columnar results.
-  3. Basic unit tests verify SQL syntax execution, aggregations, and error capture.
+  1. In-memory database engine starts and executes SQL queries (`SELECT`, `WHERE`, `JOIN`, `GROUP BY`).
+  2. Opening an Excel file (`.xlsx`, `.xls`) reads all sheets and registers each sheet as an independent table.
+  3. Column headers in sheets become table columns/variables; blank cells and mixed data types are handled safely.
+  4. CSV files are read and registered as queryable tables.
+  5. Multi-sheet SQL JOINs work smoothly across sheets.
+  6. Automated tests pass (`cargo test`).
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Scaffold `Cargo.toml` with dependencies (`duckdb`, `serde`, `tempfile`) and project module directory structure (`src/db/`, `src/parsers/`, `src/ui/`, `src/export/`).
-- [ ] 01-02: Implement `DbManager` wrapping in-memory DuckDB connection with query execution, schema introspection (`DESCRIBE`), and unit tests.
+- [ ] 01-01: Implement in-memory database manager and SQL data types (`src/db/`).
+- [ ] 01-02: Implement Excel (`calamine`) and CSV ingestion parsers (`src/parsers/`) with table registration.
 
-### Phase 2: Ingestion Engine (Excel as Database & CSV Tables)
-**Goal**: Implement fast Excel and CSV file ingestion where each Excel file acts as a database and all contained sheets are exposed as independent relational tables.
+### Phase 2: Desktop Window Shell & File Picker
+**Goal**: Build the responsive desktop application window, the file selection dialog, and the sidebar tree showing loaded files and tables.
 **Depends on**: Phase 1
-**Requirements**: INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, ENGINE-03
 **Success Criteria** (what must be TRUE):
-  1. Opening an `.xlsx` file automatically discovers every sheet in the workbook using `calamine`.
-  2. Each sheet is registered as an independent table in DuckDB with sanitized identifiers (`"{workbook}_{sheet}"`).
-  3. Heterogeneous Excel columns (mixed text/numbers/blanks) are reconciled into safe SQL types without runtime panics.
-  4. CSV files are parsed and registered as queryable tables.
-  5. Multi-sheet SQL JOINs work seamlessly across registered tables.
+  1. Desktop app window launches instantly with clean dark theme layout.
+  2. Clicking "Open File" allows picking one or multiple Excel and CSV files.
+  3. Left sidebar displays loaded files, their tables (sheets), and column names.
+  4. File reading and queries run in the background so the window never freezes or lags.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Implement `parsers/excel.rs` with `calamine`, sheet discovery, identifier sanitization, and type reconciliation.
-- [ ] 02-02: Implement `parsers/csv.rs` and integrate table registration logic into `DbManager` with integration tests.
+- [ ] 02-01: Build the desktop application window shell and dark styling (`src/ui/`).
+- [ ] 02-02: Wire native file picker (`rfd`), background thread channel, and sidebar table list.
 
-### Phase 3: Native Desktop GUI & Asynchronous Worker Architecture
-**Goal**: Build the 100% Rust desktop interface shell using `eframe`/`egui` with a dark IDE theme, responsive layout, and non-blocking background query channels.
+### Phase 3: SQL Query Box & Live Results Table
+**Goal**: Provide the interactive workspace where users can type SQL queries, click "Run" (or press F5), and view results in a fast table.
 **Depends on**: Phase 2
-**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, ENGINE-03, ENGINE-04, ENGINE-05
+**Requirements**: EDITOR-01, EDITOR-02, EDITOR-03, EDITOR-04, GRID-01, GRID-02, GRID-03, GRID-04, ENGINE-04, ENGINE-05
 **Success Criteria** (what must be TRUE):
-  1. Desktop application launches instantaneously (<100ms) with zero UI lag or dropped frames.
-  2. UI features Top Toolbar, Left Sidebar Explorer, and Center Workspace using native `egui` panels.
-  3. Sidebar Explorer dynamically lists all loaded databases, tables, and column data types in an expandable tree view.
-  4. File parsing and query execution are offloaded to background threads via `crossbeam_channel`, keeping the UI responsive at 60 FPS.
-  5. Status bar reports execution time and row counts with microsecond precision.
+  1. User can type or edit SQL queries in a multi-line query box.
+  2. Clicking "Run" (or pressing F5 / Ctrl+Enter) executes the query.
+  3. Clicking a table in the sidebar inserts a template (`SELECT * FROM "{table}" LIMIT 100`).
+  4. Results render smoothly in a table with row counts and execution timing.
+  5. Any SQL typos or errors are shown clearly without crashing the app.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Implement `eframe::App` shell (`src/app.rs`, `src/ui/theme.rs`, `src/ui/toolbar.rs`) with dark IDE styling and file picker integration via `rfd`.
-- [ ] 03-02: Implement background worker thread communication via `crossbeam_channel` and Sidebar Explorer tree widget (`src/ui/explorer.rs`).
+- [ ] 03-01: Implement the SQL query text box with execution triggers and table templates.
+- [ ] 03-02: Implement the virtualized results table grid and execution status bar.
 
-### Phase 4: SQL Code Editor & Virtualized Results Data Grid
-**Goal**: Implement the central SQL drafting interface and high-performance virtualized results viewer.
+### Phase 4: Export Button, End-to-End Testing & Cleanup
+**Goal**: Add the export button to save query results to Excel or CSV, verify the whole app from end to end, and remove old prototype code.
 **Depends on**: Phase 3
-**Requirements**: EDITOR-01, EDITOR-02, EDITOR-03, EDITOR-04, GRID-01, GRID-02, GRID-03, GRID-04
+**Requirements**: EXPORT-01, EXPORT-02, EXPORT-03, VERIFY-03, VERIFY-04
 **Success Criteria** (what must be TRUE):
-  1. User can type SQL queries into a multi-line editor and execute with F5, Ctrl+Enter, or Run button.
-  2. Selecting specific SQL text executes only the selected fragment.
-  3. Query results render in a virtualized data grid (`egui_extras::TableBuilder`) capable of scrolling 50,000+ rows at 60 FPS.
-  4. NULL values and column headers are clearly styled and formatted.
-  5. Clicking a table in the Sidebar inserts a quick template (`SELECT * FROM ... LIMIT 100`).
+  1. User can click an Export button to save query results as an Excel (`.xlsx`) or CSV file.
+  2. End-to-end test validates the complete flow: open file -> run SQL -> see results -> export file.
+  3. Standalone Windows `.exe` compiles with zero extra runtime requirements.
+  4. Outdated Python and Electron files are archived and cleaned up.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Implement `ui/editor.rs` with shortcut handling, selection execution, and template insertion.
-- [ ] 04-02: Implement `ui/grid.rs` using `egui_extras::TableBuilder` with virtualized row rendering and NULL cell presentation.
-
-### Phase 5: Multi-Format Result Export & Native File Dialogs
-**Goal**: Allow users to export any query result set into standard data formats.
-**Depends on**: Phase 4
-**Requirements**: EXPORT-01, EXPORT-02, EXPORT-03
-**Success Criteria** (what must be TRUE):
-  1. User can export query results to CSV files via native save dialogs.
-  2. User can export query results to formatted `.xlsx` workbooks using pure-Rust `rust_xlsxwriter`.
-  3. User can export query results to formatted JSON files.
-**Plans**: 1 plan
-
-Plans:
-- [ ] 05-01: Implement `src/export/` supporting CSV, Excel (`.xlsx`), and JSON export formats integrated with `rfd` save dialogs.
-
-### Phase 6: End-to-End Verification, Performance Testing & Legacy Cleanup
-**Goal**: Thoroughly review, test, and verify the complete application across realistic multi-sheet Excel files, ensuring zero regressions and rock-solid stability before archiving legacy code.
-**Depends on**: Phase 5
-**Requirements**: VERIFY-01, VERIFY-02, VERIFY-03, VERIFY-04
-**Success Criteria** (what must be TRUE):
-  1. All automated tests pass (`cargo test`).
-  2. End-to-end verification validates loading real multi-sheet Excel workbooks, executing JOIN queries, and exporting results.
-  3. Binary compiles in release mode (`cargo build --release`) into a standalone Windows `.exe` with zero Python or Node dependencies.
-  4. Outdated legacy files are safely archived and project documentation is updated.
-**Plans**: 2 plans
-
-Plans:
-- [ ] 06-01: Write comprehensive integration test suite covering edge cases (empty sheets, numeric sheet names, special characters, large datasets).
-- [ ] 06-02: Perform manual verification, produce release build, archive legacy Python/Electron code, and finalize documentation.
+- [ ] 04-01: Implement result export button for Excel (`rust_xlsxwriter`) and CSV via save dialog.
+- [ ] 04-02: End-to-end integration testing, release executable build, and cleanup of legacy prototypes.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Rust Core Setup & Embedded DuckDB Engine | 0/2 | Not started | - |
-| 2. Ingestion Engine (Excel as DB & CSV) | 0/2 | Not started | - |
-| 3. Native Desktop GUI & Async Worker | 0/2 | Not started | - |
-| 4. SQL Code Editor & Virtual Results Grid | 0/2 | Not started | - |
-| 5. Multi-Format Result Export | 0/1 | Not started | - |
-| 6. Verification, Testing & Legacy Cleanup | 0/2 | Not started | - |
+| 1. Ingestion & Embedded SQL Engine | 0/2 | Not started | - |
+| 2. Desktop Window Shell & File Picker | 0/2 | Not started | - |
+| 3. SQL Query Box & Live Results Table | 0/2 | Not started | - |
+| 4. Export Button, Verification & Cleanup | 0/2 | Not started | - |

@@ -80,40 +80,40 @@ Explicitly excluded to prevent scope creep and maintain zero-lag focus.
 
 ## Traceability
 
-Which phases cover which requirements. Populated during roadmap creation.
+Which phases cover which requirements. Updated to reflect the streamlined 4-phase roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INGEST-01 | Phase 2 | Pending |
-| INGEST-02 | Phase 2 | Pending |
-| INGEST-03 | Phase 2 | Pending |
-| INGEST-04 | Phase 2 | Pending |
-| INGEST-05 | Phase 2 | Pending |
+| INGEST-01 | Phase 1 | Pending |
+| INGEST-02 | Phase 1 | Pending |
+| INGEST-03 | Phase 1 | Pending |
+| INGEST-04 | Phase 1 | Pending |
+| INGEST-05 | Phase 1 | Pending |
 | ENGINE-01 | Phase 1 | Pending |
 | ENGINE-02 | Phase 1 | Pending |
-| ENGINE-03 | Phase 3 | Pending |
+| VERIFY-01 | Phase 1 | Pending |
+| VERIFY-02 | Phase 1 | Pending |
+| UI-01 | Phase 2 | Pending |
+| UI-02 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| UI-04 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Pending |
+| ENGINE-03 | Phase 2 | Pending |
+| EDITOR-01 | Phase 3 | Pending |
+| EDITOR-02 | Phase 3 | Pending |
+| EDITOR-03 | Phase 3 | Pending |
+| EDITOR-04 | Phase 3 | Pending |
+| GRID-01 | Phase 3 | Pending |
+| GRID-02 | Phase 3 | Pending |
+| GRID-03 | Phase 3 | Pending |
+| GRID-04 | Phase 3 | Pending |
 | ENGINE-04 | Phase 3 | Pending |
 | ENGINE-05 | Phase 3 | Pending |
-| UI-01 | Phase 3 | Pending |
-| UI-02 | Phase 3 | Pending |
-| UI-03 | Phase 3 | Pending |
-| UI-04 | Phase 3 | Pending |
-| UI-05 | Phase 3 | Pending |
-| EDITOR-01 | Phase 4 | Pending |
-| EDITOR-02 | Phase 4 | Pending |
-| EDITOR-03 | Phase 4 | Pending |
-| EDITOR-04 | Phase 4 | Pending |
-| GRID-01 | Phase 4 | Pending |
-| GRID-02 | Phase 4 | Pending |
-| GRID-03 | Phase 4 | Pending |
-| GRID-04 | Phase 4 | Pending |
-| EXPORT-01 | Phase 5 | Pending |
-| EXPORT-02 | Phase 5 | Pending |
-| EXPORT-03 | Phase 5 | Pending |
-| VERIFY-01 | Phase 6 | Pending |
-| VERIFY-02 | Phase 6 | Pending |
-| VERIFY-03 | Phase 6 | Pending |
-| VERIFY-04 | Phase 6 | Pending |
+| EXPORT-01 | Phase 4 | Pending |
+| EXPORT-02 | Phase 4 | Pending |
+| EXPORT-03 | Phase 4 | Pending |
+| VERIFY-03 | Phase 4 | Pending |
+| VERIFY-04 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 29 total
@@ -122,4 +122,4 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 ---
 *Requirements defined: 2026-10-14*
-*Last updated: 2026-10-14 after initial definition*
+*Last updated: 2026-10-26 (Streamlined to 4 phases)*

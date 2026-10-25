@@ -2,9 +2,9 @@
 gsd_state_version: '1.0'
 status: planning
 progress:
-  total_phases: 6
+  total_phases: 4
   completed_phases: 0
-  total_plans: 11
+  total_plans: 8
   completed_plans: 0
   percent: 0
 ---
@@ -13,17 +13,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-14)
+See: .planning/PROJECT.md (updated 2026-10-26)
 
 **Core value:** Instantly treat any local Excel workbook or CSV file as a relational database and execute SQL queries with zero lag, zero server setup, and zero data leaving the local machine.
-**Current focus:** Phase 1: Rust Core Setup & Embedded DuckDB Engine
+**Current focus:** Phase 1: Ingestion & Embedded SQL Engine
 
 ## Current Position
 
-Phase: 1 of 6 (Rust Core Setup & Embedded DuckDB Engine)
+Phase: 1 of 4 (Ingestion & Embedded SQL Engine)
 Plan: 0 of 2 in current phase
-Status: Ready to execute Phase 1
-Last activity: 2026-10-14 — Phase 1 planned (01-01-PLAN.md, 01-02-PLAN.md, 01-VALIDATION.md)
+Status: Ready to plan and execute Phase 1
+Last activity: 2026-10-26 — Roadmap streamlined to 4 step-by-step phases per user guidance
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -38,12 +38,10 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Rust Core Setup & DuckDB | 0/2 | - | - |
-| 2. Ingestion Engine | 0/2 | - | - |
-| 3. Native Desktop GUI | 0/2 | - | - |
-| 4. SQL Editor & Results Grid | 0/2 | - | - |
-| 5. Multi-Format Export | 0/1 | - | - |
-| 6. Verification & Cleanup | 0/2 | - | - |
+| 1. Ingestion & Embedded SQL Engine | 0/2 | - | - |
+| 2. Desktop Window Shell & File Picker | 0/2 | - | - |
+| 3. SQL Query Box & Live Results Table | 0/2 | - | - |
+| 4. Export Button, Verification & Cleanup | 0/2 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: None
@@ -55,10 +53,14 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
-- Rebuild 100% in Rust using `eframe`/`egui` for zero-lag native desktop GUI.
-- Embed `duckdb` (bundled) for local vectorized in-process analytical SQL.
+- Rebuild 100% in Rust using `eframe`/`egui` for zero-lag native desktop GUI (no external runtimes needed).
+- Embed `duckdb` (bundled) for local in-process analytical SQL.
 - Model Excel workbooks as databases and individual sheets as relational tables.
-- Replace in-place at repository root.
+- Streamlined roadmap into 4 direct phases:
+  1. Backend Engine (read Excel/CSV sheets into tables, run SQL)
+  2. Desktop Window (open file button & sidebar showing tables)
+  3. Query Box & Results Table (type SQL, click Run, see data)
+  4. Export Button & Final Verification (click to save to Excel/CSV, test everything)
 
 ### Pending Todos
 
@@ -76,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-14 09:10
-Stopped at: Project initialization complete (PROJECT.md, config.json, research, REQUIREMENTS.md, ROADMAP.md, STATE.md)
+Last session: 2026-10-26 03:45
+Stopped at: Roadmap streamlined to 4 phases matching user requirements
 Resume file: None
