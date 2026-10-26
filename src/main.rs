@@ -1,5 +1,5 @@
 //! LocalSQL Studio — Application Entry Point
 
-fn main() {
-    println!("LocalSQL Studio v0.1.0 — starting up...");
+fn main() -> Result<(), eframe::Error> {
+    localsql_studio::ui::run_native_app()
 }
