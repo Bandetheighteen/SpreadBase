@@ -18,7 +18,6 @@ node_modules/
 # Legacy Prototypes & Internal Specs
 legacy_prototype/
 Concept.txt
-wiki/
 Brain/
 *.log
 
