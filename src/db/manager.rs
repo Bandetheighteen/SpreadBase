@@ -156,6 +156,11 @@ impl DbManager {
             ValueRef::HugeInt(v) => SqlValue::HugeInt(v),
             ValueRef::Float(v) => SqlValue::Float(v),
             ValueRef::Double(v) => SqlValue::Double(v),
+            ValueRef::Decimal(d) => {
+                let scale = d.scale() as i32;
+                let val = d.value() as f64;
+                SqlValue::Double(val / 10f64.powi(scale))
+            }
             ValueRef::Text(bytes) => {
                 let s = String::from_utf8_lossy(bytes).into_owned();
                 SqlValue::Text(s)

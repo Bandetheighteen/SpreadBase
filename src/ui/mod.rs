@@ -1,11 +1,15 @@
 //! Desktop GUI components — eframe/egui application shell and panels.
 
 pub mod app;
+pub mod editor;
+pub mod grid;
 pub mod sidebar;
 pub mod theme;
 pub mod worker;
 
 pub use app::LocalSqlApp;
+pub use editor::{render_sql_editor, SqlEditorState};
+pub use grid::render_results_table;
 pub use sidebar::{render_sidebar, SidebarAction, SidebarState};
 pub use worker::{start_worker, TableInfo, WorkerCommand, WorkerEvent};
 

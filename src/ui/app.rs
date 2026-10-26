@@ -11,13 +11,16 @@ use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use eframe::App;
 use egui::{
-    vec2, Align, Button, CentralPanel, Color32, Context, Frame, Layout, Margin,
-    RichText, SidePanel, Stroke, TopBottomPanel, Ui,
+    vec2, Align, Button, CentralPanel, Color32, Context, Frame, Key, Layout, Margin,
+    RichText, Rounding, SidePanel, Stroke, TopBottomPanel, Ui,
 };
 
+use crate::db::types::QueryResult;
+use super::editor::{render_sql_editor, SqlEditorState};
+use super::grid::render_results_table;
 use super::sidebar::{render_sidebar, SidebarAction, SidebarState};
 use super::theme::{
-    apply_theme, COLOR_BORDER, COLOR_CODE_BG, COLOR_PANEL_BG, COLOR_PRIMARY,
+    apply_theme, COLOR_BORDER, COLOR_CODE_BG, COLOR_ERROR, COLOR_PANEL_BG, COLOR_PRIMARY,
     COLOR_SUCCESS, COLOR_TEXT_MUTED, COLOR_TEXT_PRIMARY,
 };
 use super::worker::{start_worker, TableInfo, WorkerCommand, WorkerEvent};
@@ -32,6 +35,12 @@ pub struct LocalSqlApp {
     pub tables: Vec<TableInfo>,
     /// State of the left sidebar explorer
     pub sidebar_state: SidebarState,
+    /// State of the SQL editor (e.g. selection)
+    pub editor_state: SqlEditorState,
+    /// Current query execution result (if any)
+    pub current_result: Option<QueryResult>,
+    /// Active query error message (if any)
+    pub error_message: Option<String>,
     /// Status message displayed in the status bar
     pub status_message: String,
     /// Active SQL query string
@@ -56,6 +65,9 @@ impl Default for LocalSqlApp {
             worker_rx,
             tables: Vec::new(),
             sidebar_state: SidebarState::default(),
+            editor_state: SqlEditorState::default(),
+            current_result: None,
+            error_message: None,
             status_message: "Ready — Open an Excel or CSV file to begin".to_string(),
             query_text: "-- Select a table on the left or type your SQL query here\nSELECT 1 AS status, 'LocalSQL Studio Ready' AS message;".to_string(),
             table_count: 0,
@@ -87,6 +99,33 @@ impl LocalSqlApp {
             {
                 let _ = tx.send(WorkerCommand::IngestFiles(files));
             }
+        });
+    }
+
+    /// Dispatches query execution to background worker.
+    /// Runs selected text fragment if highlighted; otherwise runs full query buffer.
+    pub fn trigger_query_execution(&mut self) {
+        let sql = if let Some(ref frag) = self.editor_state.selected_fragment {
+            if !frag.trim().is_empty() {
+                frag.clone()
+            } else {
+                self.query_text.clone()
+            }
+        } else {
+            self.query_text.clone()
+        };
+
+        if sql.trim().is_empty() {
+            self.status_message = "Query is empty".to_string();
+            return;
+        }
+
+        self.is_busy = true;
+        self.error_message = None;
+        self.status_message = "Executing query...".to_string();
+        let _ = self.worker_tx.send(WorkerCommand::ExecuteQuery {
+            query_id: 1,
+            sql,
         });
     }
 
@@ -124,12 +163,7 @@ impl LocalSqlApp {
                     .min_size(vec2(120.0, 26.0)),
             );
             if run_btn.clicked() {
-                self.is_busy = true;
-                self.status_message = "Executing query...".to_string();
-                let _ = self.worker_tx.send(WorkerCommand::ExecuteQuery {
-                    query_id: 1,
-                    sql: self.query_text.clone(),
-                });
+                self.trigger_query_execution();
             }
 
             // Right-aligned engine status indicator
@@ -190,6 +224,11 @@ impl App for LocalSqlApp {
             self.theme_applied = true;
         }
 
+        // Global Keyboard Shortcuts (F5 or Ctrl+Enter to execute query)
+        if ctx.input(|i| i.key_pressed(Key::F5) || (i.modifiers.command && i.key_pressed(Key::Enter))) {
+            self.trigger_query_execution();
+        }
+
         // Poll incoming messages from background worker
         while let Ok(event) = self.worker_rx.try_recv() {
             self.is_busy = false;
@@ -197,7 +236,6 @@ impl App for LocalSqlApp {
                 WorkerEvent::FilesIngested { tables, errors } => {
                     let count = tables.len();
                     for t in tables {
-                        // Avoid duplicates if reloaded
                         if let Some(pos) = self.tables.iter().position(|existing| existing.table_name == t.table_name) {
                             self.tables[pos] = t;
                         } else {
@@ -225,10 +263,16 @@ impl App for LocalSqlApp {
                         Ok(qr) => {
                             self.last_row_count = qr.row_count;
                             self.last_exec_ms = qr.execution_time_ms;
-                            self.status_message = format!("Query executed: {} rows returned", qr.row_count);
+                            self.status_message = format!(
+                                "Query executed: {} rows returned in {:.2} ms",
+                                qr.row_count, qr.execution_time_ms
+                            );
+                            self.error_message = None;
+                            self.current_result = Some(qr);
                         }
                         Err(err) => {
-                            self.status_message = format!("Query Error: {}", err);
+                            self.status_message = "Query Failed".to_string();
+                            self.error_message = Some(err);
                         }
                     }
                 }
@@ -276,27 +320,67 @@ impl App for LocalSqlApp {
                         SidebarAction::SelectTable(tbl) | SidebarAction::InsertQuery(tbl) => {
                             self.query_text = format!("SELECT * FROM \"{}\" LIMIT 100;", tbl);
                             self.status_message = format!("Selected table: \"{}\"", tbl);
+                            self.trigger_query_execution();
                         }
                     }
                 }
             });
 
-        // Central Workspace: Query Editor & Results Table Placeholder
+        // Central Workspace: Query Editor & Live Results Grid
         CentralPanel::default()
             .frame(Frame::none().fill(COLOR_CODE_BG).inner_margin(Margin::same(12.0)))
             .show(ctx, |ui| {
-                ui.label(
-                    RichText::new("SQL WORKSPACE")
-                        .size(11.0)
-                        .strong()
-                        .color(COLOR_TEXT_MUTED),
-                );
+                // Diagnostic Error Banner (if query failed)
+                if let Some(ref err) = self.error_message {
+                    let mut dismiss = false;
+                    Frame::none()
+                        .fill(Color32::from_rgb(45, 20, 20))
+                        .stroke(Stroke::new(1.0_f32, COLOR_ERROR))
+                        .rounding(Rounding::same(4.0))
+                        .inner_margin(Margin::same(8.0))
+                        .show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new("⚠ Query Error:").color(COLOR_ERROR).strong());
+                                ui.label(RichText::new(err).color(COLOR_TEXT_PRIMARY).monospace());
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    if ui.small_button("✖").clicked() {
+                                        dismiss = true;
+                                    }
+                                });
+                            });
+                        });
+                    if dismiss {
+                        self.error_message = None;
+                    }
+                    ui.add_space(8.0);
+                }
+
+                // Multi-line SQL Query Editor
+                render_sql_editor(ui, &mut self.editor_state, &mut self.query_text);
+
                 ui.add_space(8.0);
-                ui.label(
-                    RichText::new(&self.query_text)
-                        .monospace()
-                        .color(COLOR_TEXT_PRIMARY),
-                );
+                ui.separator();
+                ui.add_space(8.0);
+
+                // Live Results Table Grid
+                if let Some(ref res) = self.current_result {
+                    render_results_table(ui, res);
+                } else {
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(40.0);
+                        ui.label(
+                            RichText::new("No query results yet")
+                                .color(COLOR_TEXT_MUTED)
+                                .size(13.0),
+                        );
+                        ui.add_space(6.0);
+                        ui.label(
+                            RichText::new("Click '▶ Run Query (F5)' above or press Ctrl+Enter to execute.")
+                                .color(COLOR_TEXT_MUTED)
+                                .size(11.0),
+                        );
+                    });
+                }
             });
     }
 }
