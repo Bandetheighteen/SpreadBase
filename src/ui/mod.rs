@@ -1,9 +1,13 @@
 //! Desktop GUI components — eframe/egui application shell and panels.
 
 pub mod app;
+pub mod sidebar;
 pub mod theme;
+pub mod worker;
 
 pub use app::LocalSqlApp;
+pub use sidebar::{render_sidebar, SidebarAction, SidebarState};
+pub use worker::{start_worker, TableInfo, WorkerCommand, WorkerEvent};
 
 /// Configures and launches the native desktop window.
 pub fn run_native_app() -> Result<(), eframe::Error> {
