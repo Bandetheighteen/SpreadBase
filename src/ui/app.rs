@@ -129,6 +129,69 @@ impl LocalSqlApp {
         });
     }
 
+    /// Exports active query results to an Excel workbook.
+    pub fn export_excel(&mut self) {
+        if let Some(ref res) = self.current_result {
+            if let Some(path) = rfd::FileDialog::new()
+                .set_file_name("results.xlsx")
+                .add_filter("Excel Workbook (*.xlsx)", &["xlsx"])
+                .save_file()
+            {
+                match crate::export::export_to_excel(res, &path, Some("Results")) {
+                    Ok(_) => {
+                        let fname = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                        self.status_message = format!("Exported {} rows to {}", res.row_count, fname);
+                    }
+                    Err(e) => {
+                        self.error_message = Some(format!("Export failed: {}", e));
+                    }
+                }
+            }
+        }
+    }
+
+    /// Exports active query results to a CSV file.
+    pub fn export_csv(&mut self) {
+        if let Some(ref res) = self.current_result {
+            if let Some(path) = rfd::FileDialog::new()
+                .set_file_name("results.csv")
+                .add_filter("CSV File (*.csv)", &["csv"])
+                .save_file()
+            {
+                match crate::export::export_to_csv(res, &path) {
+                    Ok(_) => {
+                        let fname = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                        self.status_message = format!("Exported {} rows to {}", res.row_count, fname);
+                    }
+                    Err(e) => {
+                        self.error_message = Some(format!("Export failed: {}", e));
+                    }
+                }
+            }
+        }
+    }
+
+    /// Exports active query results to a JSON file.
+    pub fn export_json(&mut self) {
+        if let Some(ref res) = self.current_result {
+            if let Some(path) = rfd::FileDialog::new()
+                .set_file_name("results.json")
+                .add_filter("JSON File (*.json)", &["json"])
+                .save_file()
+            {
+                match crate::export::export_to_json(res, &path) {
+                    Ok(_) => {
+                        let fname = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                        self.status_message = format!("Exported {} rows to {}", res.row_count, fname);
+                    }
+                    Err(e) => {
+                        self.error_message = Some(format!("Export failed: {}", e));
+                    }
+                }
+            }
+        }
+    }
+
     /// Renders the top toolbar with action buttons.
     fn render_top_toolbar(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
@@ -165,6 +228,24 @@ impl LocalSqlApp {
             if run_btn.clicked() {
                 self.trigger_query_execution();
             }
+
+            // Export Actions (enabled only when rows are present)
+            let has_rows = self.current_result.as_ref().map(|r| r.row_count > 0).unwrap_or(false);
+            ui.add_space(8.0);
+            ui.separator();
+            ui.add_space(8.0);
+
+            ui.add_enabled_ui(has_rows, |ui| {
+                if ui.button(RichText::new("📊 Export Excel").color(COLOR_TEXT_PRIMARY)).clicked() {
+                    self.export_excel();
+                }
+                if ui.button(RichText::new("💾 Export CSV").color(COLOR_TEXT_PRIMARY)).clicked() {
+                    self.export_csv();
+                }
+                if ui.button(RichText::new("📄 Export JSON").color(COLOR_TEXT_PRIMARY)).clicked() {
+                    self.export_json();
+                }
+            });
 
             // Right-aligned engine status indicator
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
