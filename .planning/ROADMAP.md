@@ -9,7 +9,7 @@ A standalone, 100% Rust desktop application that lets you query local Excel work
 - [x] **Phase 1: Ingestion & Embedded SQL Engine** - Build the behind-the-scenes engine that reads Excel and CSV files, turns every sheet into a table (with column headers as variables), and runs SQL queries in memory.
 - [x] **Phase 2: Desktop Window Shell & File Picker** - Create the desktop window with dark styling, a button to open one or multiple files, and a left sidebar listing all loaded files, sheets, and columns.
 - [x] **Phase 3: SQL Query Box & Live Results Table** - Add the query editor box to type SQL, a "Run" button (and F5 shortcut), and a fast table that displays the fetched rows and columns.
-- [ ] **Phase 4: Export Button, End-to-End Testing & Cleanup** - Add the export button to save query results into an Excel or CSV file, verify the full workflow end-to-end, and remove outdated prototype files.
+- [x] **Phase 4: Export Button, End-to-End Testing & Cleanup** - Add the export button to save query results into an Excel or CSV file, verify the full workflow end-to-end, and remove outdated prototype files.
 
 ## Phase Details
 
@@ -73,8 +73,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Implement result export button for Excel (`rust_xlsxwriter`) and CSV via save dialog.
-- [ ] 04-02: End-to-end integration testing, release executable build, and cleanup of legacy prototypes.
+- [x] 04-01: Implement result export button for Excel (`rust_xlsxwriter`) and CSV via save dialog.
+- [x] 04-02: End-to-end integration testing, release executable build, and cleanup of legacy prototypes.
 
 ## Progress
 
@@ -83,7 +83,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Ingestion & Embedded SQL Engine | 0/2 | Not started | - |
-| 2. Desktop Window Shell & File Picker | 0/2 | Not started | - |
-| 3. SQL Query Box & Live Results Table | 0/2 | Not started | - |
-| 4. Export Button, Verification & Cleanup | 0/2 | Not started | - |
+| 1. Ingestion & Embedded SQL Engine | 2/2 | Complete | 2026-10-26 |
+| 2. Desktop Window Shell & File Picker | 2/2 | Complete | 2026-10-26 |
+| 3. SQL Query Box & Live Results Table | 2/2 | Complete | 2026-10-26 |
+| 4. Export Button, Verification & Cleanup | 2/2 | Complete | 2026-10-26 |
