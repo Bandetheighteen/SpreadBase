@@ -7,7 +7,7 @@ A standalone, 100% Rust desktop application that lets you query local Excel work
 ## Phases
 
 - [x] **Phase 1: Ingestion & Embedded SQL Engine** - Build the behind-the-scenes engine that reads Excel and CSV files, turns every sheet into a table (with column headers as variables), and runs SQL queries in memory.
-- [ ] **Phase 2: Desktop Window Shell & File Picker** - Create the desktop window with dark styling, a button to open one or multiple files, and a left sidebar listing all loaded files, sheets, and columns.
+- [x] **Phase 2: Desktop Window Shell & File Picker** - Create the desktop window with dark styling, a button to open one or multiple files, and a left sidebar listing all loaded files, sheets, and columns.
 - [ ] **Phase 3: SQL Query Box & Live Results Table** - Add the query editor box to type SQL, a "Run" button (and F5 shortcut), and a fast table that displays the fetched rows and columns.
 - [ ] **Phase 4: Export Button, End-to-End Testing & Cleanup** - Add the export button to save query results into an Excel or CSV file, verify the full workflow end-to-end, and remove outdated prototype files.
 
@@ -42,8 +42,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Build the desktop application window shell and dark styling (`src/ui/`).
-- [ ] 02-02: Wire native file picker (`rfd`), background thread channel, and sidebar table list.
+- [x] 02-01: Build the desktop application window shell and dark styling (`src/ui/`).
+- [x] 02-02: Wire native file picker (`rfd`), background thread channel, and sidebar table list.
 
 ### Phase 3: SQL Query Box & Live Results Table
 **Goal**: Provide the interactive workspace where users can type SQL queries, click "Run" (or press F5), and view results in a fast table.
