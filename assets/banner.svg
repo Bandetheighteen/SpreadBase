@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0A0F1D"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+
+    <!-- Accent Line Gradient -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+
+    <!-- Ambient Glow Gradient -->
+    <radialGradient id="glowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"/>
+    </radialGradient>
+
+    <!-- Technical Pattern Grid -->
+    <pattern id="dotGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="16" cy="16" r="1" fill="#1E293B" opacity="0.6"/>
+    </pattern>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect width="1280" height="640" fill="url(#bgGradient)"/>
+  <rect width="1280" height="640" fill="url(#dotGrid)"/>
+
+  <!-- Ambient Glow Behind Right Window -->
+  <circle cx="960" cy="320" r="280" fill="url(#glowCyan)"/>
+  <circle cx="920" cy="360" r="240" fill="url(#glowGreen)"/>
+
+  <!-- ==================== LEFT COLUMN: BRANDING ==================== -->
+  <g transform="translate(75, 75)">
+    <!-- Pill Badge -->
+    <rect x="0" y="0" width="410" height="32" rx="16" fill="#0C2638" stroke="#06B6D4" stroke-width="1" opacity="0.9"/>
+    <text x="16" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#67E8F9" letter-spacing="0.5">
+      ⚡ v1.0.0 RELEASE  •  PURE RUST &amp; EMBEDDED DUCKDB
+    </text>
+
+    <!-- Main Title -->
+    <text x="0" y="96" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="64" font-weight="800" fill="#F8FAFC" letter-spacing="-1">
+      SpreadBase
+    </text>
+
+    <!-- Glowing Accent Bar -->
+    <rect x="0" y="118" width="480" height="4" rx="2" fill="url(#accentGradient)"/>
+
+    <!-- Tagline -->
+    <text x="0" y="156" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#E2E8F0">
+      Instant Spreadsheet Relational Database Engine
+    </text>
+    <text x="0" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#38BDF8">
+      &amp; Zero-Lag SQL Desktop Studio
+    </text>
+
+    <!-- Description -->
+    <text x="0" y="238" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" fill="#94A3B8" line-height="24">
+      <tspan x="0" dy="0">Treat local Excel workbooks (.xlsx, .xls) and CSV files as</tspan>
+      <tspan x="0" dy="24">relational database tables. Join, filter, aggregate, and export</tspan>
+      <tspan x="0" dy="24">with zero servers, zero telemetry, and 100% offline privacy.</tspan>
+    </text>
+
+    <!-- Feature Pills Grid -->
+    <g transform="translate(0, 320)">
+      <!-- Pill 1 -->
+      <g transform="translate(0, 0)">
+        <rect width="220" height="34" rx="8" fill="#0F172A" stroke="#10B981" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="14" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">
+          🔒 100% Offline &amp; Private
+        </text>
+      </g>
+      <!-- Pill 2 -->
+      <g transform="translate(235, 0)">
+        <rect width="220" height="34" rx="8" fill="#0F172A" stroke="#06B6D4" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="14" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">
+          ⚡ In-Memory DuckDB
+        </text>
+      </g>
+      <!-- Pill 3 -->
+      <g transform="translate(0, 44)">
+        <rect width="220" height="34" rx="8" fill="#0F172A" stroke="#A855F7" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="14" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">
+          📑 Multi-Sheet SQL Joins
+        </text>
+      </g>
+      <!-- Pill 4 -->
+      <g transform="translate(235, 44)">
+        <rect width="220" height="34" rx="8" fill="#0F172A" stroke="#F59E0B" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="14" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">
+          💾 Excel / CSV / JSON Export
+        </text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== RIGHT COLUMN: IDE MOCK ==================== -->
+  <g transform="translate(650, 70)">
+    <!-- Outer Card Container -->
+    <rect width="560" height="500" rx="12" fill="#0F172A" stroke="#334155" stroke-width="1" filter="drop-shadow(0 20px 25px rgba(0, 0, 0, 0.5))"/>
+
+    <!-- Titlebar -->
+    <path d="M 0 12 C 0 5.37 5.37 0 12 0 L 548 0 C 554.63 0 560 5.37 560 12 L 560 42 L 0 42 Z" fill="#162138"/>
+    <line x1="0" y1="42" x2="560" y2="42" stroke="#334155" stroke-width="1"/>
+
+    <!-- Traffic Lights -->
+    <circle cx="22" cy="21" r="5" fill="#EF4444"/>
+    <circle cx="38" cy="21" r="5" fill="#F59E0B"/>
+    <circle cx="54" cy="21" r="5" fill="#10B981"/>
+
+    <!-- Titlebar Filename -->
+    <text x="75" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', monospace" font-size="13" fill="#94A3B8">
+      SpreadBase Studio — analytical_query.sql
+    </text>
+
+    <!-- Run Query Button -->
+    <rect x="465" y="8" width="80" height="26" rx="6" fill="#10B981"/>
+    <text x="480" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">
+      ▶ Run F5
+    </text>
+
+    <!-- SQL Editor Area -->
+    <g transform="translate(20, 60)" font-family="'Consolas', 'Courier New', monospace" font-size="13">
+      <!-- Line 1 -->
+      <text x="0" y="0" fill="#475569"> 1</text>
+      <text x="32" y="0"><tspan fill="#38BDF8" font-weight="600">SELECT</tspan><tspan fill="#F1F5F9"> d.dept_name,</tspan></text>
+
+      <!-- Line 2 -->
+      <text x="0" y="22" fill="#475569"> 2</text>
+      <text x="32" y="22"><tspan fill="#38BDF8" font-weight="600">       COUNT</tspan><tspan fill="#F1F5F9">(e.emp_id) </tspan><tspan fill="#38BDF8" font-weight="600">AS</tspan><tspan fill="#F1F5F9"> total_employees,</tspan></text>
+
+      <!-- Line 3 -->
+      <text x="0" y="44" fill="#475569"> 3</text>
+      <text x="32" y="44"><tspan fill="#38BDF8" font-weight="600">       ROUND</tspan><tspan fill="#F1F5F9">(</tspan><tspan fill="#38BDF8" font-weight="600">AVG</tspan><tspan fill="#F1F5F9">(s.salary), </tspan><tspan fill="#F59E0B">2</tspan><tspan fill="#F1F5F9">) </tspan><tspan fill="#38BDF8" font-weight="600">AS</tspan><tspan fill="#F1F5F9"> avg_salary</tspan></text>
+
+      <!-- Line 4 -->
+      <text x="0" y="66" fill="#475569"> 4</text>
+      <text x="32" y="66"><tspan fill="#38BDF8" font-weight="600">FROM</tspan><tspan fill="#C084FC"> "Departments.xlsx".Depts</tspan><tspan fill="#F1F5F9"> d</tspan></text>
+
+      <!-- Line 5 -->
+      <text x="0" y="88" fill="#475569"> 5</text>
+      <text x="32" y="88"><tspan fill="#38BDF8" font-weight="600">JOIN</tspan><tspan fill="#C084FC"> "Employees.xlsx".Roster</tspan><tspan fill="#F1F5F9"> e </tspan><tspan fill="#38BDF8" font-weight="600">ON</tspan><tspan fill="#F1F5F9"> d.id = e.dept_id</tspan></text>
+
+      <!-- Line 6 -->
+      <text x="0" y="110" fill="#475569"> 6</text>
+      <text x="32" y="110"><tspan fill="#38BDF8" font-weight="600">JOIN</tspan><tspan fill="#C084FC"> "Payroll_2026.csv"</tspan><tspan fill="#F1F5F9"> s </tspan><tspan fill="#38BDF8" font-weight="600">ON</tspan><tspan fill="#F1F5F9"> e.id = s.emp_id</tspan></text>
+
+      <!-- Line 7 -->
+      <text x="0" y="132" fill="#475569"> 7</text>
+      <text x="32" y="132"><tspan fill="#38BDF8" font-weight="600">GROUP BY</tspan><tspan fill="#F1F5F9"> d.dept_name </tspan><tspan fill="#38BDF8" font-weight="600">ORDER BY</tspan><tspan fill="#F1F5F9"> avg_salary </tspan><tspan fill="#38BDF8" font-weight="600">DESC</tspan><tspan fill="#F1F5F9">;</tspan></text>
+    </g>
+
+    <!-- Results Divider Line -->
+    <line x1="0" y1="210" x2="560" y2="210" stroke="#334155" stroke-width="1"/>
+
+    <!-- Results Section -->
+    <g transform="translate(16, 218)">
+      <text x="6" y="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12" font-weight="700" fill="#94A3B8" letter-spacing="0.5">
+        QUERY RESULTS
+      </text>
+
+      <!-- Export Buttons -->
+      <g transform="translate(320, 0)">
+        <rect x="0" y="0" width="62" height="22" rx="4" fill="#1E293B" stroke="#10B981" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="8" y="15" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#E2E8F0">📊 Excel</text>
+
+        <rect x="68" y="0" width="62" height="22" rx="4" fill="#1E293B" stroke="#06B6D4" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="76" y="15" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#E2E8F0">💾 CSV</text>
+
+        <rect x="136" y="0" width="62" height="22" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="1" stroke-opacity="0.6"/>
+        <text x="144" y="15" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#E2E8F0">📄 JSON</text>
+      </g>
+
+      <!-- Data Table Box -->
+      <g transform="translate(0, 30)">
+        <rect width="528" height="185" rx="6" fill="#0B1220" stroke="#1E293B" stroke-width="1"/>
+
+        <!-- Header Row -->
+        <text x="16" y="24" font-family="'Consolas', monospace" font-size="12" font-weight="700" fill="#38BDF8">dept_name (VARCHAR)</text>
+        <text x="210" y="24" font-family="'Consolas', monospace" font-size="12" font-weight="700" fill="#38BDF8">total_employees (BIGINT)</text>
+        <text x="390" y="24" font-family="'Consolas', monospace" font-size="12" font-weight="700" fill="#38BDF8">avg_salary (DOUBLE)</text>
+        <line x1="0" y1="36" x2="528" y2="36" stroke="#334155" stroke-width="1" stroke-opacity="0.8"/>
+
+        <!-- Row 1 -->
+        <text x="16" y="58" font-family="'Consolas', monospace" font-size="12" fill="#F1F5F9">Engineering</text>
+        <text x="250" y="58" font-family="'Consolas', monospace" font-size="12" fill="#F59E0B">34</text>
+        <text x="410" y="58" font-family="'Consolas', monospace" font-size="12" fill="#10B981">$124,500.50</text>
+
+        <!-- Row 2 -->
+        <text x="16" y="86" font-family="'Consolas', monospace" font-size="12" fill="#F1F5F9">Product Design</text>
+        <text x="250" y="86" font-family="'Consolas', monospace" font-size="12" fill="#F59E0B">16</text>
+        <text x="410" y="86" font-family="'Consolas', monospace" font-size="12" fill="#10B981">$108,200.00</text>
+
+        <!-- Row 3 -->
+        <text x="16" y="114" font-family="'Consolas', monospace" font-size="12" fill="#F1F5F9">Marketing &amp; Growth</text>
+        <text x="250" y="114" font-family="'Consolas', monospace" font-size="12" fill="#F59E0B">12</text>
+        <text x="410" y="114" font-family="'Consolas', monospace" font-size="12" fill="#10B981">$89,750.80</text>
+
+        <!-- Status Bar -->
+        <line x1="0" y1="138" x2="528" y2="138" stroke="#1E293B" stroke-width="1"/>
+        <text x="16" y="160" font-family="'Consolas', monospace" font-size="11" fill="#10B981">
+          ✓ 3 rows fetched in 1.28 ms  •  100% In-Memory DuckDB
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

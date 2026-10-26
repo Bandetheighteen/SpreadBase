@@ -69,7 +69,7 @@ impl Default for LocalSqlApp {
             current_result: None,
             error_message: None,
             status_message: "Ready — Open an Excel or CSV file to begin".to_string(),
-            query_text: "-- Select a table on the left or type your SQL query here\nSELECT 1 AS status, 'LocalSQL Studio Ready' AS message;".to_string(),
+            query_text: "-- Select a table on the left or type your SQL query here\nSELECT 1 AS status, 'SpreadBase Ready' AS message;".to_string(),
             table_count: 0,
             last_row_count: 0,
             last_exec_ms: 0.0,
@@ -198,7 +198,7 @@ impl LocalSqlApp {
             // App Branding
             ui.add_space(4.0);
             ui.label(
-                RichText::new("⚡ LocalSQL Studio")
+                RichText::new("⚡ SpreadBase")
                     .strong()
                     .color(COLOR_PRIMARY)
                     .size(15.0),

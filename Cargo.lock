@@ -2035,25 +2035,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4744e383959f0db86ede514b809b1c53251889093803c05267acc7d4e7030d70"
 
 [[package]]
-name = "localsql_studio"
-version = "0.1.0"
-dependencies = [
- "calamine",
- "chrono",
- "crossbeam-channel",
- "csv",
- "duckdb",
- "eframe",
- "egui",
- "egui_extras",
- "rfd",
- "rust_xlsxwriter",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3332,6 +3313,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eda41003dc44290527a59b13432d4a0379379fa074b70174882adfbdfd917844"
 dependencies = [
  "bitflags 2.13.2",
+]
+
+[[package]]
+name = "spreadbase"
+version = "1.0.0"
+dependencies = [
+ "calamine",
+ "chrono",
+ "crossbeam-channel",
+ "csv",
+ "duckdb",
+ "eframe",
+ "egui",
+ "egui_extras",
+ "rfd",
+ "rust_xlsxwriter",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

@@ -15,6 +15,13 @@ dist/
 node_modules/
 .npm/
 
+# Legacy Prototypes & Internal Specs
+legacy_prototype/
+Concept.txt
+wiki/
+Brain/
+*.log
+
 # IDE & OS
 .vscode/
 .idea/

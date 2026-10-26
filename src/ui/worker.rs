@@ -58,7 +58,7 @@ pub fn start_worker() -> (Sender<WorkerCommand>, Receiver<WorkerEvent>) {
     let (event_tx, event_rx) = unbounded::<WorkerEvent>();
 
     thread::Builder::new()
-        .name("localsql-worker".to_string())
+        .name("spreadbase-worker".to_string())
         .spawn(move || {
             let db = match DbManager::new_in_memory() {
                 Ok(manager) => manager,

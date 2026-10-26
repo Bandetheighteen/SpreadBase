@@ -1,12 +1,16 @@
 [package]
-name = "localsql_studio"
-version = "0.1.0"
+name = "spreadbase"
+version = "1.0.0"
 edition = "2021"
-description = "LocalSQL Studio — treat Excel workbooks as databases and query them with zero-lag SQL"
+description = "SpreadBase — Standalone reactive spreadsheet database engine & SQL desktop studio"
+authors = ["Shounak Saha <@Bandetheighteen>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Bandetheighteen/SpreadBase"
+readme = "README.md"
 
 # Binary target
 [[bin]]
-name = "localsql_studio"
+name = "spreadbase"
 path = "src/main.rs"
 
 # Library target (for integration tests)
